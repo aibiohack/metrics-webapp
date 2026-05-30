@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Metrics</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#080B10;--surface:#0F1318;--card:#141920;--border:rgba(255,255,255,0.07);
+  --green:#00C27A;--blue:#3D9EFF;--orange:#F0882A;--red:#E84444;--purple:#A78BFA;
+  --text:#E2E8F0;--sub:rgba(255,255,255,0.45);--hint:rgba(255,255,255,0.25);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100%;overflow-x:hidden}
+input::-webkit-inner-spin-button,input::-webkit-outer-spin-button{-webkit-appearance:none}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;min-height:100vh}
+.screen.active{display:flex}
+
+/* ONBOARDING */
+#scr-onboard{align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+.ob-logo{font-size:48px;font-weight:600;letter-spacing:4px;margin-bottom:8px}
+.ob-logo span{color:var(--green)}
+.ob-tagline{font-size:13px;color:var(--sub);letter-spacing:1px;margin-bottom:48px}
+.ob-form{width:100%;max-width:340px}
+.ob-label{font-size:11px;color:var(--hint);letter-spacing:1px;text-align:left;margin-bottom:6px}
+.ob-input{width:100%;background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;transition:border-color .2s}
+.ob-input:focus{border-color:var(--green)}
+.ob-input::placeholder{color:var(--hint)}
+.ob-goals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.ob-goal-btn{padding:10px;background:var(--card);border:0.5px solid var(--border);border-radius:10px;color:var(--sub);font-size:12px;cursor:pointer;transition:all .15s;text-align:center}
+.ob-goal-btn.sel{border-color:var(--green);color:var(--green);background:rgba(0,194,122,0.08)}
+.ob-btn{width:100%;padding:16px;background:var(--green);border:none;border-radius:14px;color:#000;font-size:14px;font-weight:600;letter-spacing:1.5px;cursor:pointer;transition:transform .12s}
+.ob-btn:active{transform:scale(.97)}
+.ob-step{font-size:11px;color:var(--hint);margin-bottom:24px}
+
+/* HEADER */
+.app-header{padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border);flex-shrink:0}
+.header-logo{font-size:17px;font-weight:600;letter-spacing:2px}
+.header-logo span{color:var(--green)}
+.header-right{display:flex;align-items:center;gap:10px}
+.header-week{font-size:10px;color:var(--hint)}
+.avatar-btn{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#000;cursor:pointer;border:none;flex-shrink:0}
+
+/* TABS */
+.app-tabs{display:flex;padding:8px 12px;gap:4px;border-bottom:0.5px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.app-tabs::-webkit-scrollbar{display:none}
+.app-tab{flex:0 0 auto;padding:5px 12px;border-radius:16px;border:0.5px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.4);font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.app-tab.on{background:var(--green);border-color:var(--green);color:#000;font-weight:500}
+
+/* CONTENT */
+.app-body{flex:1;overflow-y:auto;padding:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.08) transparent}
+.app-body::-webkit-scrollbar{width:3px}
+.app-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:3px}
+
+.tab-content{display:none}
+.tab-content.on{display:block}
+
+.ttl{font-size:22px;font-weight:500;margin-bottom:2px;color:var(--text)}
+.sub{font-size:10px;color:var(--hint);letter-spacing:.8px;margin-bottom:12px}
+
+/* CARDS */
+.card{background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:13px;margin-bottom:9px}
+.card:focus-within{border-color:var(--green)}
+.cl{font-size:9px;letter-spacing:1.5px;color:var(--hint);text-transform:uppercase;margin-bottom:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}
+
+/* STAT CARDS */
+.sc{background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:11px;cursor:pointer;transition:border-color .15s}
+.sc.sel{border-color:var(--ac,var(--green))}
+.sl{font-size:9px;letter-spacing:1px;color:var(--hint);margin-bottom:3px;text-transform:uppercase}
+.sv{font-size:20px;font-weight:500;line-height:1.1}
+.sd{font-size:10px;margin-top:2px}
+.gn{color:var(--green)}.wa{color:var(--orange)}.dm{color:var(--hint)}.bl{color:var(--blue)}
+
+/* CHART */
+.chead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ctitle{font-size:11px;font-weight:500;color:var(--text)}
+.periods{display:flex;gap:3px}
+.pb{font-size:10px;padding:3px 7px;border-radius:5px;border:0.5px solid rgba(255,255,255,0.1);background:transparent;color:var(--hint);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.pb.on{border-color:rgba(255,255,255,0.35);color:var(--text)}
+.cw{height:85px;position:relative}
+.leg{display:flex;gap:8px;margin-top:7px;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--sub)}
+.ld{width:5px;height:5px;border-radius:50%;flex:0 0 5px}
+
+/* PROGRESS */
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.prog-name{font-size:11px;color:var(--sub)}
+.prog-nums{font-size:11px;font-weight:500}
+.prog-bar{height:4px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.prog-fill{height:100%;border-radius:4px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+
+/* GOALS */
+.goal-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}
+.goal-row:last-child{border-bottom:none}
+.goal-l{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--sub)}
+.goal-v{font-size:13px;font-weight:500}
+.dot-g{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green);flex:0 0 6px}
+.dot-o{width:6px;height:6px;border-radius:50%;background:var(--orange);flex:0 0 6px}
+
+/* INPUTS */
+.inp{background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:28px;font-weight:500;width:100%;caret-color:var(--green)}
+.inp::placeholder{color:rgba(255,255,255,0.12)}
+
+/* SLIDER */
+.sl-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.sl-val{font-size:28px;font-weight:500}
+.sl-goal{font-size:10px;color:var(--hint)}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:3px;background:rgba(255,255,255,0.1);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);border:2.5px solid var(--card)}
+
+/* BUTTON */
+.btn{width:100%;padding:14px;background:var(--green);border:none;border-radius:12px;color:#000;font-size:13px;font-weight:600;letter-spacing:1.5px;cursor:pointer;margin-top:6px;transition:transform .12s,opacity .12s;font-family:'DM Sans',sans-serif}
+.btn:active{transform:scale(.97)}
+.btn-ghost{background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:var(--sub)}
+
+/* INSIGHTS */
+.ins{display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}
+.ins:last-child{border-bottom:none}
+.ins-ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:0 0 30px;font-size:15px}
+.ins-type{font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;font-weight:500}
+.ins-text{font-size:12px;line-height:1.55;color:#c8d3e0}
+.ins-text strong{color:#fff;font-weight:500}
+.ins-meta{font-size:10px;color:var(--hint);margin-top:4px}
+.ins-badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
+
+/* HISTORY */
+.hi-item{background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px}
+.hi-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.hi-chips{display:flex;gap:5px;flex-wrap:wrap}
+.hi-chip{font-size:10px;padding:2px 7px;border-radius:5px;background:rgba(255,255,255,0.06);color:var(--sub)}
+.del-btn{background:none;border:none;cursor:pointer;padding:2px 5px;border-radius:4px;color:rgba(255,255,255,0.2);font-size:12px;transition:all .15s}
+.del-btn:hover{color:var(--red);background:rgba(232,68,68,0.1)}
+
+/* SHORTCUT */
+.shortcut{background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.sc-code{font-family:'DM Mono',monospace;font-size:12px;color:var(--green);min-width:95px;flex:0 0 95px}
+.sc-desc{font-size:11px;color:var(--sub)}
+
+/* PROFILE */
+#scr-profile{padding:0}
+.profile-header{padding:24px 16px 16px;text-align:center;border-bottom:0.5px solid var(--border)}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;color:#000;margin:0 auto 12px}
+.profile-name{font-size:20px;font-weight:500;margin-bottom:4px}
+.profile-meta{font-size:11px;color:var(--sub)}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-bottom:0.5px solid var(--border)}
+.profile-stat{background:var(--card);padding:14px 8px;text-align:center}
+.ps-val{font-size:18px;font-weight:500;color:var(--green)}
+.ps-label{font-size:9px;color:var(--hint);letter-spacing:.5px;margin-top:2px}
+.profile-section{padding:16px}
+.profile-section-title{font-size:10px;letter-spacing:1.5px;color:var(--hint);text-transform:uppercase;margin-bottom:10px}
+.profile-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}
+.profile-row:last-child{border-bottom:none}
+.pr-label{font-size:13px;color:var(--text)}
+.pr-val{font-size:13px;color:var(--sub)}
+.pr-edit{background:none;border:0.5px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--sub);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.pr-edit:hover{border-color:var(--green);color:var(--green)}
+.goal-edit-input{background:var(--card);border:0.5px solid var(--green);border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:100px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#000;font-size:11px;font-weight:600;letter-spacing:1px;padding:9px 20px;border-radius:20px;transition:transform .28s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;z-index:999;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* WEEK BEST */
+.week-best{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.wb{border-radius:8px;padding:8px 10px}
+.wb-val{font-size:16px;font-weight:500;margin-bottom:2px}
+.wb-label{font-size:10px;opacity:.65}
+
+/* TODO */
+.todo-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}
+.todo-item:last-child{border-bottom:none}
+.todo-dot{width:6px;height:6px;border-radius:50%;flex:0 0 6px;margin-top:4px}
+.todo-text{font-size:11px;color:#c8d3e0;line-height:1.5}
+.todo-tag{font-size:9px;padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<!-- ═══ ONBOARDING ═══ -->
+<div class="screen active" id="scr-onboard">
+  <div class="ob-logo">METR<span>I</span>CS</div>
+  <div class="ob-tagline">ТРЕКЕР РОСТА · КРАСНОДАР → МОСКВА</div>
+
+  <div class="ob-form" id="ob-step1">
+    <div class="ob-step">ШАГ 1 / 3 · КТО ТЫ</div>
+    <div class="ob-label">ТВОЁ ИМЯ</div>
+    <input class="ob-input" id="ob-name" placeholder="Введи имя" maxlength="30">
+    <div class="ob-label">ЦЕЛЬ НА 5 МЕСЯЦЕВ В МОСКВЕ</div>
+    <div class="ob-goals">
+      <div class="ob-goal-btn sel" onclick="togGoal(this)">1М ₽/мес</div>
+      <div class="ob-goal-btn" onclick="togGoal(this)">2М ₽/мес</div>
+      <div class="ob-goal-btn" onclick="togGoal(this)">3М ₽/мес</div>
+      <div class="ob-goal-btn" onclick="togGoal(this)">5М ₽/мес</div>
+    </div>
+    <button class="ob-btn" onclick="obNext1()">Далее →</button>
+  </div>
+
+  <div class="ob-form" id="ob-step2" style="display:none">
+    <div class="ob-step">ШАГ 2 / 3 · НЕДЕЛЬНЫЕ ЦЕЛИ</div>
+    <div class="ob-label">ЦЕЛЬ ВЫРУЧКИ В НЕДЕЛЮ (₽)</div>
+    <input class="ob-input" id="ob-rev" placeholder="250000" type="number" inputmode="numeric">
+    <div class="ob-label">ВСТРЕЧ В НЕДЕЛЮ</div>
+    <input class="ob-input" id="ob-meets" placeholder="5" type="number" inputmode="numeric">
+    <div class="ob-label">ВИДЕО В НЕДЕЛЮ</div>
+    <input class="ob-input" id="ob-videos" placeholder="5" type="number" inputmode="numeric">
+    <button class="ob-btn" onclick="obNext2()">Далее →</button>
+  </div>
+
+  <div class="ob-form" id="ob-step3" style="display:none">
+    <div class="ob-step">ШАГ 3 / 3 · СТАРТ</div>
+    <div style="font-size:40px;margin-bottom:16px">✓</div>
+    <div style="font-size:22px;font-weight:500;margin-bottom:8px" id="ob-ready-name">Готов, —</div>
+    <div style="font-size:13px;color:var(--sub);line-height:1.7;margin-bottom:32px">Трекер настроен под твои цели.<br>Вноси данные каждую неделю.<br>Инсайты появятся через 2–3 недели.</div>
+    <button class="ob-btn" onclick="obFinish()">Начать →</button>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div class="screen" id="scr-app">
+  <div class="app-header">
+    <div class="header-logo">METR<span>I</span>CS</div>
+    <div class="header-right">
+      <div class="header-week" id="hdrWeek"></div>
+      <button class="avatar-btn" id="avatarBtn" onclick="openProfile()" aria-label="Профиль"></button>
+    </div>
+  </div>
+
+  <div class="app-tabs">
+    <button class="app-tab on" onclick="swTab('ov',this)">Обзор</button>
+    <button class="app-tab" onclick="swTab('mo',this)">Деньги</button>
+    <button class="app-tab" onclick="swTab('co',this)">Контент</button>
+    <button class="app-tab" onclick="swTab('ne',this)">Нетворкинг</button>
+    <button class="app-tab" onclick="swTab('he',this)">Здоровье</button>
+    <button class="app-tab" onclick="swTab('in',this)">Инсайты</button>
+    <button class="app-tab" onclick="swTab('hi',this)">История</button>
+  </div>
+
+  <div class="app-body">
+
+    <!-- ОБЗОР -->
+    <div class="tab-content on" id="t-ov">
+      <div class="ttl">Обзор</div>
+      <div class="sub">НАЖМИ КАРТОЧКУ — ПЕРЕКЛЮЧИ ТРЕНД</div>
+      <div class="g2">
+        <div class="sc sel" style="--ac:var(--green)" onclick="pk(0,this)">
+          <div class="sl">Выручка</div>
+          <div class="sv gn" id="ov-rev">—</div>
+          <div class="sd dm" id="ov-rev-d">нет данных</div>
+        </div>
+        <div class="sc" style="--ac:var(--blue)" onclick="pk(1,this)">
+          <div class="sl">Видео</div>
+          <div class="sv bl" id="ov-vid">—</div>
+          <div class="sd dm" id="ov-vid-d">нет данных</div>
+        </div>
+        <div class="sc" style="--ac:var(--orange)" onclick="pk(2,this)">
+          <div class="sl">Встречи</div>
+          <div class="sv" style="color:var(--orange)" id="ov-meets">—</div>
+          <div class="sd dm" id="ov-meets-d">нет данных</div>
+        </div>
+        <div class="sc" style="--ac:var(--green)" onclick="pk(3,this)">
+          <div class="sl">Энергия</div>
+          <div class="sv gn" id="ov-energy">—</div>
+          <div class="sd dm" id="ov-energy-d">нет данных</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chead">
+          <div class="ctitle" id="chart-title">Выручка (₽)</div>
+          <div class="periods">
+            <button class="pb on" onclick="pp(4,this)">4н</button>
+            <button class="pb" onclick="pp(8,this)">8н</button>
+            <button class="pb" onclick="pp(12,this)">12н</button>
+          </div>
+        </div>
+        <div class="cw"><canvas id="mainChart"></canvas></div>
+        <div class="leg" id="mainLeg"></div>
+      </div>
+      <div class="card">
+        <div class="cl">Прогресс к цели месяца</div>
+        <div id="monthProg"></div>
+      </div>
+      <div class="card">
+        <div class="cl">Цели недели</div>
+        <div id="weekGoals"></div>
+      </div>
+    </div>
+
+    <!-- ДЕНЬГИ -->
+    <div class="tab-content" id="t-mo">
+      <div class="ttl">Деньги</div>
+      <div class="sub">ВЫРУЧКА И СДЕЛКИ</div>
+      <div class="card">
+        <div class="cl">Выручка за неделю</div>
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:18px;color:var(--hint)">₽</span>
+          <input class="inp" type="number" id="m_r" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card" style="margin-bottom:0"><div class="cl">Сделок</div><input class="inp" type="number" id="m_d" placeholder="0" inputmode="numeric"></div>
+        <div class="card" style="margin-bottom:0"><div class="cl">Pipeline</div><input class="inp" type="number" id="m_p" placeholder="0" inputmode="numeric"></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="card"><div class="cl" style="margin-bottom:6px">История выручки</div><div class="cw"><canvas id="mhChart"></canvas></div></div>
+      <button class="btn" onclick="saveBlock('money')">Сохранить</button>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- КОНТЕНТ -->
+    <div class="tab-content" id="t-co">
+      <div class="ttl">Контент</div>
+      <div class="sub">ВИДЕО · ПОДПИСЧИКИ · ЛИДЫ</div>
+      <div class="g2">
+        <div class="card" style="margin-bottom:0"><div class="cl">Снято</div><input class="inp" type="number" id="c_s" placeholder="0" inputmode="numeric"></div>
+        <div class="card" style="margin-bottom:0"><div class="cl">Опубликовано</div><input class="inp" type="number" id="c_p" placeholder="0" inputmode="numeric"></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="g2">
+        <div class="card" style="margin-bottom:0"><div class="cl">+Подписчики</div><input class="inp" type="number" id="c_sb" placeholder="0" inputmode="numeric"></div>
+        <div class="card" style="margin-bottom:0"><div class="cl">Лиды</div><input class="inp" type="number" id="c_l" placeholder="0" inputmode="numeric"></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="card"><div class="cl" style="margin-bottom:6px">Динамика публикаций</div><div class="cw"><canvas id="chChart"></canvas></div></div>
+      <button class="btn" onclick="saveBlock('content')">Сохранить</button>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- НЕТВОРКИНГ -->
+    <div class="tab-content" id="t-ne">
+      <div class="ttl">Нетворкинг</div>
+      <div class="sub">ВСТРЕЧИ · КОНТАКТЫ · ВВЕДЕНИЯ</div>
+      <div class="card">
+        <div class="cl">Встреч за неделю</div>
+        <div class="sl-hd"><div class="sl-val gn" id="nv0">3</div><div class="sl-goal">цель: <span id="g-meets">5</span>+</div></div>
+        <input type="range" min="0" max="20" value="3" step="1" oninput="sl(this,'nv0')">
+      </div>
+      <div class="card">
+        <div class="cl">Новых контактов в CRM</div>
+        <div class="sl-hd"><div class="sl-val bl" id="nv1">4</div><div class="sl-goal">цель: 5+</div></div>
+        <input type="range" min="0" max="20" value="4" step="1" oninput="sl(this,'nv1')">
+      </div>
+      <div class="card">
+        <div class="cl">Введений (познакомил людей)</div>
+        <div class="sl-hd"><div class="sl-val gn" id="nv2">2</div><div class="sl-goal">цель: 2+</div></div>
+        <input type="range" min="0" max="10" value="2" step="1" oninput="sl(this,'nv2')">
+      </div>
+      <div class="card"><div class="cl" style="margin-bottom:6px">Встречи — история</div><div class="cw"><canvas id="nhChart"></canvas></div></div>
+      <button class="btn" onclick="saveBlock('network')">Сохранить</button>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- ЗДОРОВЬЕ -->
+    <div class="tab-content" id="t-he">
+      <div class="ttl">Здоровье</div>
+      <div class="sub">ТРЕНИРОВКИ · СОН · ЭНЕРГИЯ · HRV</div>
+      <div class="g2">
+        <div class="card" style="margin-bottom:0"><div class="cl">Тренировок</div><input class="inp" type="number" id="h_w" placeholder="0" inputmode="numeric"></div>
+        <div class="card" style="margin-bottom:0"><div class="cl">HRV</div><input class="inp" type="number" id="h_h" placeholder="—" inputmode="numeric"></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="card">
+        <div class="cl">Сон (часов)</div>
+        <div class="sl-hd"><div class="sl-val bl" id="hv0">7.5</div><div class="sl-goal">цель: 7.5+</div></div>
+        <input type="range" min="4" max="10" step="0.5" value="7.5" oninput="slf(this,'hv0')">
+      </div>
+      <div class="card">
+        <div class="cl">Энергия (1–10)</div>
+        <div class="sl-hd"><div class="sl-val gn" id="hv1">7</div><div class="sl-goal">цель: 7+</div></div>
+        <input type="range" min="1" max="10" step="1" value="7" oninput="sl(this,'hv1')">
+      </div>
+      <div class="card"><div class="cl" style="margin-bottom:6px">Энергия и сон — динамика</div><div class="cw"><canvas id="hhChart"></canvas></div></div>
+      <button class="btn" onclick="saveBlock('health')">Сохранить</button>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- ИНСАЙТЫ -->
+    <div class="tab-content" id="t-in">
+      <div class="ttl">Инсайты</div>
+      <div class="sub">ПАТТЕРНЫ · КОРРЕЛЯЦИИ · РИСКИ</div>
+      <div class="card" id="insightsCard">
+        <div class="cl">Автоматический анализ</div>
+        <div id="insightsList"></div>
+      </div>
+      <div class="card">
+        <div class="cl">Лучшая неделя за период</div>
+        <div class="week-best" id="weekBest"></div>
+        <div style="font-size:10px;color:var(--hint);margin-top:8px" id="weekBestDate"></div>
+      </div>
+      <div class="card">
+        <div class="cl">Быстрый ввод через бота</div>
+        <div class="shortcut"><div class="sc-code">д 150000 3 8</div><div class="sc-desc">деньги: выручка · сделки · pipeline</div></div>
+        <div class="shortcut"><div class="sc-code">к 5 4 200 8</div><div class="sc-desc">контент: снято · опубл. · подп. · лиды</div></div>
+        <div class="shortcut"><div class="sc-code">н 6 5 2</div><div class="sc-desc">нетворкинг: встречи · контакты · введения</div></div>
+        <div class="shortcut" style="margin-bottom:0"><div class="sc-code">з 5 62 7.5 8</div><div class="sc-desc">здоровье: трен. · HRV · сон · энергия</div></div>
+      </div>
+    </div>
+
+    <!-- ИСТОРИЯ -->
+    <div class="tab-content" id="t-hi">
+      <div class="ttl">История</div>
+      <div class="sub">ЗАПИСИ И РЕДАКТИРОВАНИЕ</div>
+      <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="pb on" onclick="hFlt('all',this)">Все</button>
+        <button class="pb" onclick="hFlt('money',this)">Деньги</button>
+        <button class="pb" onclick="hFlt('content',this)">Контент</button>
+        <button class="pb" onclick="hFlt('network',this)">Нетворкинг</button>
+        <button class="pb" onclick="hFlt('health',this)">Здоровье</button>
+      </div>
+      <div id="histList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
+<div class="screen" id="scr-profile">
+  <div class="app-header" style="justify-content:flex-start;gap:12px">
+    <button onclick="closeProfile()" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:20px;padding:0;line-height:1">←</button>
+    <div style="font-size:15px;font-weight:500">Профиль</div>
+  </div>
+
+  <div style="overflow-y:auto;flex:1">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar"></div>
+      <div class="profile-name" id="profileName">—</div>
+      <div class="profile-meta" id="profileMeta">Москва · с мая 2026</div>
+    </div>
+
+    <div class="profile-stats">
+      <div class="profile-stat">
+        <div class="ps-val" id="ps-weeks">0</div>
+        <div class="ps-label">НЕДЕЛЬ</div>
+      </div>
+      <div class="profile-stat">
+        <div class="ps-val" id="ps-entries">0</div>
+        <div class="ps-label">ЗАПИСЕЙ</div>
+      </div>
+      <div class="profile-stat">
+        <div class="ps-val" id="ps-streak">0</div>
+        <div class="ps-label">СТРАЙК</div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Личные данные</div>
+      <div class="profile-row">
+        <div class="pr-label">Имя</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="pr-val" id="pr-name-val">—</div>
+          <button class="pr-edit" onclick="editField('name')">Изменить</button>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="pr-label">Цель</div>
+        <div class="pr-val" id="pr-goal-val">—</div>
+      </div>
+      <div class="profile-row">
+        <div class="pr-label">Дней в трекере</div>
+        <div class="pr-val" id="pr-days-val">0</div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Недельные цели</div>
+      <div class="profile-row">
+        <div class="pr-label">Выручка / нед</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="pr-val" id="pr-rev-val">—</div>
+          <button class="pr-edit" onclick="editGoal('revenue')">Изм.</button>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="pr-label">Встречи / нед</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="pr-val" id="pr-meets-val">—</div>
+          <button class="pr-edit" onclick="editGoal('meets')">Изм.</button>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="pr-label">Видео / нед</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="pr-val" id="pr-vid-val">—</div>
+          <button class="pr-edit" onclick="editGoal('videos')">Изм.</button>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="pr-label">Тренировки / нед</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="pr-val" id="pr-wrkt-val">—</div>
+          <button class="pr-edit" onclick="editGoal('workouts')">Изм.</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Данные</div>
+      <div class="profile-row">
+        <div class="pr-label">Экспорт JSON</div>
+        <button class="pr-edit" onclick="exportData()">Скачать</button>
+      </div>
+      <div class="profile-row">
+        <div class="pr-label">Сбросить данные</div>
+        <button class="pr-edit" style="border-color:rgba(232,68,68,0.3);color:var(--red)" onclick="resetData()">Сбросить</button>
+      </div>
+    </div>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Telegram ──
+const tg = window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();tg.setHeaderColor && tg.setHeaderColor('#080B10');tg.setBackgroundColor && tg.setBackgroundColor('#080B10');}
+
+// ── Storage ──
+const SK = 'metrics_v3';
+function load(){try{return JSON.parse(localStorage.getItem(SK))||defState();}catch{return defState();}}
+function defState(){
+  return{
+    user:{name:'',goal:'1М ₽/мес',startDate:new Date().toISOString().split('T')[0]},
+    goals:{revenue:250000,meets:5,videos:5,workouts:5},
+    entries:[],
+    onboarded:false
+  };
+}
+function save(s){localStorage.setItem(SK,JSON.stringify(s));}
+function addEntry(e){const s=load();e.id=Date.now();e.date=new Date().toISOString().split('T')[0];s.entries.unshift(e);save(s);}
+function delEntry(id){const s=load();s.entries=s.entries.filter(e=>e.id!==id);save(s);renderHistory();}
+function getEntries(days=30){const s=load();const cut=Date.now()-days*864e5;return s.entries.filter(e=>new Date(e.date).getTime()>=cut);}
+
+// ── Onboarding ──
+let obGoal='1М ₽/мес';
+function togGoal(el){document.querySelectorAll('.ob-goal-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');obGoal=el.textContent;}
+function obNext1(){
+  const name=document.getElementById('ob-name').value.trim();
+  if(!name){document.getElementById('ob-name').focus();return;}
+  document.getElementById('ob-step1').style.display='none';
+  document.getElementById('ob-step2').style.display='block';
+}
+function obNext2(){
+  document.getElementById('ob-step2').style.display='none';
+  const name=document.getElementById('ob-name').value.trim();
+  document.getElementById('ob-ready-name').textContent='Готов, '+name+' —';
+  document.getElementById('ob-step3').style.display='block';
+}
+function obFinish(){
+  const s=load();
+  s.user.name=document.getElementById('ob-name').value.trim()||'Пользователь';
+  s.user.goal=obGoal;
+  s.goals.revenue=+(document.getElementById('ob-rev').value)||250000;
+  s.goals.meets=+(document.getElementById('ob-meets').value)||5;
+  s.goals.videos=+(document.getElementById('ob-videos').value)||5;
+  s.onboarded=true;
+  save(s);
+  launchApp();
+}
+function launchApp(){
+  document.getElementById('scr-onboard').classList.remove('active');
+  document.getElementById('scr-app').classList.add('active');
+  initApp();
+}
+
+// ── Init ──
+function initApp(){
+  const s=load();
+  const initials=s.user.name?s.user.name.slice(0,2).toUpperCase():'МЕ';
+  document.getElementById('avatarBtn').textContent=initials;
+  const now=new Date();
+  const wStart=new Date(now);wStart.setDate(now.getDate()-now.getDay()+1);
+  const wEnd=new Date(wStart);wEnd.setDate(wStart.getDate()+6);
+  const f=d=>d.toLocaleDateString('ru',{day:'2-digit',month:'short'});
+  document.getElementById('hdrWeek').textContent=f(wStart)+' — '+f(wEnd);
+  document.getElementById('g-meets').textContent=s.goals.meets;
+  renderOverview();
+  renderMiniCharts();
+  renderInsights();
+  renderHistory();
+}
+
+// ── Check onboarding ──
+window.addEventListener('load',()=>{
+  const tgUser=tg?.initDataUnsafe?.user;
+  const s=load();
+  if(tgUser&&!s.user.name){
+    s.user.name=tgUser.first_name||'';
+    if(!s.onboarded){
+      document.getElementById('ob-name').value=s.user.name;
+    }
+    save(s);
+  }
+  if(s.onboarded){launchApp();}
+});
+
+// ── Tab switching ──
+function swTab(id,btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.app-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('t-'+id).classList.add('on');
+  btn.classList.add('on');
+  document.querySelector('.app-body').scrollTop=0;
+  if(id==='hi')renderHistory();
+  if(id==='in')renderInsights();
+}
+
+// ── Slider ──
+function sl(el,id){
+  const v=Math.round(+el.value);
+  document.getElementById(id).textContent=v;
+  const pct=((v-+el.min)/(+el.max-+el.min))*100;
+  el.style.background='linear-gradient(to right,var(--green) '+pct+'%,rgba(255,255,255,0.1) '+pct+'%)';
+}
+function slf(el,id){
+  const v=+el.value;
+  document.getElementById(id).textContent=v.toFixed(1);
+  const pct=((v-+el.min)/(+el.max-+el.min))*100;
+  el.style.background='linear-gradient(to right,var(--green) '+pct+'%,rgba(255,255,255,0.1) '+pct+'%)';
+}
+
+// ── Save ──
+function saveBlock(type){
+  const btn=event.target;btn.textContent='...';btn.style.opacity='.7';
+  let e={type};
+  if(type==='money'){e.revenue=+(document.getElementById('m_r').value||0);e.deals=+(document.getElementById('m_d').value||0);e.pipeline=+(document.getElementById('m_p').value||0);}
+  else if(type==='content'){e.shot=+(document.getElementById('c_s').value||0);e.published=+(document.getElementById('c_p').value||0);e.subs=+(document.getElementById('c_sb').value||0);e.leads=+(document.getElementById('c_l').value||0);}
+  else if(type==='network'){e.meets=+(document.getElementById('nv0').textContent||0);e.contacts=+(document.getElementById('nv1').textContent||0);e.intros=+(document.getElementById('nv2').textContent||0);}
+  else if(type==='health'){e.workouts=+(document.getElementById('h_w').value||0);e.hrv=+(document.getElementById('h_h').value||0);e.sleep=+(document.getElementById('hv0').textContent||7);e.energy=+(document.getElementById('hv1').textContent||7);}
+  addEntry(e);
+  if(tg)tg.sendData(JSON.stringify({action:'save',entry:e}));
+  setTimeout(()=>{btn.textContent='Сохранить';btn.style.opacity='1';toast('Сохранено ✓');renderOverview();renderInsights();},350);
+}
+
+// ── Toast ──
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+// ── Charts ──
+const CHARTS={};
+const MDATA=[
+  {title:'Выручка (₽)',ac:'#00C27A',sets:[{l:'Выручка',c:'#00C27A',fill:true,d:[55,65,75,85,95,110,125,140,160,180,200,225]}],leg:[{c:'#00C27A',l:'Выручка'}]},
+  {title:'Контент',ac:'#3D9EFF',sets:[{l:'Видео',c:'#3D9EFF',fill:false,d:[1,2,2,3,2,3,3,4,3,4,5,5]},{l:'+Подп.',c:'#00C27A',fill:false,d:[80,100,90,150,120,180,200,160,220,280,350,420],y2:true}],leg:[{c:'#3D9EFF',l:'Видео'},{c:'#00C27A',l:'+Подписчики'}]},
+  {title:'Нетворкинг',ac:'#F0882A',sets:[{l:'Встречи',c:'#F0882A',fill:false,d:[1,2,2,3,3,4,4,5,5,6,6,7]},{l:'Контакты',c:'#3D9EFF',fill:false,d:[1,1,2,2,3,3,4,4,5,5,5,6]}],leg:[{c:'#F0882A',l:'Встречи'},{c:'#3D9EFF',l:'Контакты'}]},
+  {title:'Здоровье',ac:'#00C27A',sets:[{l:'Энергия',c:'#00C27A',fill:false,d:[5.5,6,6.5,6,7,7.2,7,7.5,7.8,8,7.5,7.8]},{l:'Сон',c:'#3D9EFF',fill:false,dash:true,d:[6,6.5,6.5,7,7,7.5,7,7.5,7.5,8,7.5,7.5]},{l:'Трен.',c:'#F0882A',fill:false,d:[2,3,3,4,3,4,5,4,5,5,5,5]}],leg:[{c:'#00C27A',l:'Энергия'},{c:'#3D9EFF',l:'Сон'},{c:'#F0882A',l:'Трен.'}]}
+];
+let curM=0,curN=4;
+
+function lbl(n){const a=[];for(let i=n;i>=1;i--)a.push(i===1?'Эта':'Н-'+i);return a;}
+
+function mkChart(id,labels,datasets,opts={}){
+  if(CHARTS[id])CHARTS[id].destroy();
+  const el=document.getElementById(id);if(!el)return;
+  const scales={
+    x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(255,255,255,0.3)',font:{size:9}}},
+    y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(255,255,255,0.3)',font:{size:9},maxTicksLimit:4,...(opts.ycb?{callback:opts.ycb}:{})}}
+  };
+  if(opts.y2)scales.y2={position:'right',grid:{display:false},ticks:{color:'rgba(255,255,255,0.2)',font:{size:9},maxTicksLimit:3}};
+  CHARTS[id]=new Chart(el,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2630',titleColor:'rgba(255,255,255,0.4)',bodyColor:'#e2e8f0',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,padding:8}},scales,interaction:{mode:'index',intersect:false},animation:{duration:220}}});
+}
+
+function drawMain(){
+  const m=MDATA[curM];
+  const ds=m.sets.map(s=>({label:s.l,data:s.d.slice(-curN),borderColor:s.c,backgroundColor:s.fill?s.c+'22':'transparent',fill:!!s.fill,borderWidth:2,tension:0.4,pointRadius:0,pointHoverRadius:4,borderDash:s.dash?[4,3]:[],yAxisID:s.y2?'y2':'y'}));
+  mkChart('mainChart',lbl(curN),ds,{y2:m.sets.some(s=>s.y2),ycb:curM===0?v=>Math.round(v)+'к':null});
+  document.getElementById('chart-title').textContent=m.title;
+  document.getElementById('mainLeg').innerHTML=m.leg.map(l=>'<div class="li"><div class="ld" style="background:'+l.c+'"></div><span>'+l.l+'</span></div>').join('');
+}
+
+function pk(i,el){
+  curM=i;
+  document.querySelectorAll('#t-ov .sc').forEach((c,j)=>c.classList.toggle('sel',j===i));
+  drawMain();
+}
+function pp(n,btn){
+  curN=n;
+  document.querySelectorAll('.periods .pb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  drawMain();
+}
+
+function renderMiniCharts(){
+  const wl=['Н-6','Н-5','Н-4','Н-3','Н-2','Прош.','Эта'];
+  const mds=(d,c,f)=>[{data:d,borderColor:c,backgroundColor:f?c+'22':'transparent',fill:!!f,borderWidth:2,tension:0.4,pointRadius:0}];
+  mkChart('mhChart',wl,mds([95,110,125,140,155,175,200],'#00C27A',true));
+  mkChart('chChart',wl,[{data:[2,3,3,4,3,4,5],backgroundColor:'rgba(61,158,255,0.4)',borderColor:'transparent',fill:false,type:'bar',borderRadius:3}]);
+  mkChart('nhChart',wl,mds([3,4,4,5,5,6,6],'#F0882A',false));
+  mkChart('hhChart',wl,[{data:[7,7.2,7,7.5,7.8,8,7.8],borderColor:'#00C27A',backgroundColor:'transparent',fill:false,borderWidth:2,tension:0.4,pointRadius:0},{data:[6.5,7,7,6.5,7.5,7.5,7.5],borderColor:'#3D9EFF',backgroundColor:'transparent',fill:false,borderWidth:2,tension:0.4,pointRadius:0,borderDash:[4,3]}]);
+}
+
+// ── Overview render ──
+function renderOverview(){
+  const s=load();
+  const entries=getEntries(7);
+  const prev=getEntries(14).filter(e=>new Date(e.date).getTime()<Date.now()-7*864e5);
+  const last=(arr,k)=>{for(let i=arr.length-1;i>=0;i--)if(arr[i][k]!=null)return arr[i][k];return null;};
+  const tot=(arr,k)=>arr.reduce((a,e)=>a+(e[k]||0),0);
+  const avg=(arr,k)=>{const v=arr.filter(e=>k in e).map(e=>e[k]);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null;};
+
+  const money=entries.filter(e=>e.type==='money');
+  const pmoney=prev.filter(e=>e.type==='money');
+  const content=entries.filter(e=>e.type==='content');
+  const network=entries.filter(e=>e.type==='network');
+  const health=entries.filter(e=>e.type==='health');
+
+  const rev=last(money,'revenue');
+  const prevRev=last(pmoney,'revenue');
+  const pub=tot(content,'published');
+  const meets=tot(network,'meets');
+  const energy=avg(health,'energy');
+
+  const setCard=(id,ddId,val,delta,goal,fmt)=>{
+    const el=document.getElementById(id);
+    const dd=document.getElementById(ddId);
+    if(val===null){el.textContent='—';dd.textContent='нет данных';dd.className='sd dm';return;}
+    el.textContent=fmt?fmt(val):val;
+    const ok=val>=goal;
+    dd.className='sd '+(ok?'gn':'wa');
+    if(delta!==null){dd.textContent=(delta>=0?'+':'')+delta+'% к пр. нед.';}
+    else{dd.textContent=ok?'цель выполнена':'цель: '+goal+(goal>100?'к':'')+'+';}
+  };
+
+  const revDelta=rev!==null&&prevRev?Math.round((rev-prevRev)/prevRev*100):null;
+  setCard('ov-rev','ov-rev-d',rev,revDelta,s.goals.revenue,v=>Math.round(v/1000)+'к');
+  setCard('ov-vid','ov-vid-d',pub,null,s.goals.videos,null);
+  setCard('ov-meets','ov-meets-d',meets,null,s.goals.meets,null);
+  setCard('ov-energy','ov-energy-d',energy!==null?+energy:null,null,7,null);
+
+  drawMain();
+
+  // Month progress
+  const monthEntries=getEntries(30);
+  const mMoney=monthEntries.filter(e=>e.type==='money');
+  const mContent=monthEntries.filter(e=>e.type==='content');
+  const mNetwork=monthEntries.filter(e=>e.type==='network');
+  const mHealth=monthEntries.filter(e=>e.type==='health');
+  const monthGoalRev=s.goals.revenue*4;
+  const items=[
+    {l:'Выручка',cur:mMoney.reduce((a,e)=>a+(e.revenue||0),0),goal:monthGoalRev,fmt:v=>Math.round(v/1000)+'к',c:'#00C27A'},
+    {l:'Встречи',cur:mNetwork.reduce((a,e)=>a+(e.meets||0),0),goal:s.goals.meets*4,fmt:v=>v,c:'#F0882A'},
+    {l:'Видео',cur:mContent.reduce((a,e)=>a+(e.published||0),0),goal:s.goals.videos*4,fmt:v=>v,c:'#3D9EFF'},
+    {l:'Тренировки',cur:mHealth.reduce((a,e)=>a+(e.workouts||0),0),goal:s.goals.workouts*4,fmt:v=>v,c:'#00C27A'},
+  ];
+  document.getElementById('monthProg').innerHTML=items.map(it=>{
+    const pct=Math.min(100,it.goal>0?Math.round(it.cur/it.goal*100):0);
+    return '<div class="prog-row"><div class="prog-name">'+it.l+'</div><div class="prog-nums" style="color:'+it.c+'">'+it.fmt(it.cur)+' / '+it.fmt(it.goal)+' <span style="color:var(--hint);font-size:10px">('+pct+'%)</span></div></div><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+it.c+'"></div></div>';
+  }).join('');
+
+  // Week goals
+  document.getElementById('weekGoals').innerHTML=[
+    {l:'Выручка '+Math.round(s.goals.revenue/1000)+'к+',ok:rev>=s.goals.revenue,v:rev!==null?Math.round(rev/1000)+'к / '+Math.round(s.goals.revenue/1000)+'к':'—'},
+    {l:'Видео '+s.goals.videos+'+',ok:pub>=s.goals.videos,v:pub+' / '+s.goals.videos},
+    {l:'Встречи '+s.goals.meets+'+',ok:meets>=s.goals.meets,v:meets+' / '+s.goals.meets},
+    {l:'Тренировки '+s.goals.workouts+'+',ok:tot(health,'workouts')>=s.goals.workouts,v:tot(health,'workouts')+' / '+s.goals.workouts},
+  ].map(g=>'<div class="goal-row"><div class="goal-l"><span class="'+(g.ok?'dot-g':'dot-o')+'"></span>'+g.l+'</div><div class="goal-v '+(g.ok?'gn':'wa')+'">'+g.v+'</div></div>').join('');
+}
+
+// ── INSIGHTS ENGINE: 25-30 инсайтов на каждый блок ──
+const INSIGHT_BANK = {
+  money: [
+    {cond:(d)=>d.rev>0&&d.prevRev>0&&d.rev>d.prevRev*1.3,icon:'📈',color:'#00C27A',type:'РОСТ',text:'Выручка выросла на <strong>'+'{delta}'+'%</strong> к прошлой неделе. Паттерн роста устойчив — не меняй стратегию'},
+    {cond:(d)=>d.rev>0&&d.prevRev>0&&d.rev<d.prevRev*0.8,icon:'⚠️',color:'#E84444',type:'ПАДЕНИЕ',text:'Выручка упала на <strong>'+'{delta}'+'%</strong>. Проверь: снизились ли встречи или упала энергия на той же неделе'},
+    {cond:(d)=>d.deals>=3&&d.pipeline>=8,icon:'🔥',color:'#00C27A',type:'PIPELINE',text:'Сильная неделя по сделкам. <strong>'+'{deals}'+'</strong> закрытых + '+'{pipe}'+' в pipeline — следующие недели будут продуктивными'},
+    {cond:(d)=>d.deals===0&&d.meets>=5,icon:'🔍',color:'#F0882A',type:'КОНВЕРСИЯ',text:'Много встреч, но <strong>0 сделок</strong>. Проверь оффер — возможно нужна корректировка формулировки ценности'},
+    {cond:(d)=>d.rev>=d.goals.revenue,icon:'✓',color:'#00C27A',type:'ЦЕЛЬ',text:'Недельная цель по выручке <strong>выполнена</strong>. Зафикси что сработало и повтори на следующей неделе'},
+    {cond:(d)=>d.meets>=7&&d.rev>0,icon:'🤝',color:'#00C27A',type:'НЕТВОРКИНГ→$',text:'Высокая активность встреч напрямую коррелирует с выручкой. Твоя модель работает через личный контакт'},
+    {cond:(d)=>d.pipe>=10,icon:'⚡',color:'#3D9EFF',type:'PIPELINE',text:'<strong>'+'{pipe}'+' человек</strong> в pipeline — рекорд. Убедись что успеваешь качественно вести каждого'},
+    {cond:(d)=>d.weeks>=4&&d.avgRev>0,icon:'📊',color:'#3D9EFF',type:'ТРЕНД',text:'Средняя выручка за месяц: <strong>'+'{avgRev}'+'к ₽</strong>. Для цели '+'{goal}'+'М к 5-му месяцу нужно ускорение x'+'{mult}'},
+  ],
+  content: [
+    {cond:(d)=>d.pub>=5,icon:'✓',color:'#00C27A',type:'ОБЪЁМ',text:'<strong>'+'{pub}'+' видео</strong> за неделю — цель выполнена. Стабильность публикаций строит алгоритмическое доверие'},
+    {cond:(d)=>d.pub<3,icon:'⚠️',color:'#F0882A',type:'ОБЪЁМ',text:'Только <strong>'+'{pub}'+' видео</strong> за неделю. Ниже 3 публикаций алгоритм теряет тебя из виду'},
+    {cond:(d)=>d.subs>300,icon:'🚀',color:'#00C27A',type:'РОСТ',text:'Отличный прирост: <strong>+'+'{subs}'+' подписчиков</strong>. Проанализируй топ-видео недели — повтори тему или формат'},
+    {cond:(d)=>d.subs<50&&d.pub>=3,icon:'🔍',color:'#F0882A',type:'ОХВАТ',text:'Видео выходят, но прирост слабый. Проблема в <strong>крючке первых 3 секунд</strong> или неправильный хэштег/время'},
+    {cond:(d)=>d.leads>=5,icon:'💰',color:'#00C27A',type:'КОНВЕРСИЯ',text:'<strong>'+'{leads}'+' лидов</strong> из контента — контент работает как воронка продаж. Усиливай CTA в описаниях'},
+    {cond:(d)=>d.shot>d.pub*1.5,icon:'📦',color:'#3D9EFF',type:'ЗАПАС',text:'Снято больше чем опубликовано — есть запас контента. Это страховка на неактивные недели'},
+    {cond:(d)=>d.pub>=5&&d.subs>0,icon:'📈',color:'#3D9EFF',type:'ЭФФЕКТИВ.',text:'Конверсия просмотров в подписчиков растёт. Фокус на <strong>экспертных темах</strong> > вирусных — лучше для твоей ниши'},
+    {cond:(d)=>d.pub>=3&&d.leads===0,icon:'🎯',color:'#F0882A',type:'ВОРОНКА',text:'Контент есть, лидов нет. Добавь <strong>явный CTA</strong> в каждое видео: "ссылка в профиле" + конкретное действие'},
+  ],
+  network: [
+    {cond:(d)=>d.meets>=d.goals.meets,icon:'✓',color:'#00C27A',type:'ЦЕЛЬ',text:'<strong>'+'{meets}'+' встреч</strong> — недельная цель выполнена. Нетворкинг — главный двигатель роста в первые месяцы'},
+    {cond:(d)=>d.meets<3,icon:'⚠️',color:'#E84444',type:'АКТИВНОСТЬ',text:'Меньше 3 встреч за неделю. В первые месяцы в Москве это критично — нетворкинг должен быть приоритетом'},
+    {cond:(d)=>d.intros>=3,icon:'🌐',color:'#00C27A',type:'КОННЕКТОР',text:'<strong>'+'{intros}'+' введений</strong> — ты становишься коннектором. Это самая сильная роль в нетворкинге — люди запоминают'},
+    {cond:(d)=>d.contacts>=7,icon:'📇',color:'#00C27A',type:'БАЗА',text:'<strong>'+'{contacts}'+' новых контактов</strong> за неделю — высокий темп. Убедись что делаешь follow-up в течение 24 часов'},
+    {cond:(d)=>d.meets>=5&&d.contacts<3,icon:'🔍',color:'#F0882A',type:'КАЧЕСТВО',text:'Много встреч, мало новых контактов. Возможно встречаешься с одними и теми же — расширяй круги'},
+    {cond:(d)=>d.intros===0&&d.meets>=4,icon:'💡',color:'#3D9EFF',type:'СОВЕТ',text:'Нет введений на этой неделе. Одно введение в день — самый быстрый способ войти в московские круги'},
+    {cond:(d)=>d.meets>=8,icon:'🔥',color:'#00C27A',type:'ИНТЕНСИВНОСТЬ',text:'<strong>'+'{meets}'+' встреч</strong> — максимальная интенсивность. Следи за энергией: не давай нетворкингу выжигать'},
+    {cond:(d)=>d.contacts>=5&&d.weeks<=8,icon:'📈',color:'#3D9EFF',type:'ТЕМП',text:'Хороший темп набора базы в первые недели. К 3-му месяцу при таком темпе будет 50+ качественных контактов'},
+  ],
+  health: [
+    {cond:(d)=>d.energy>=8,icon:'⚡',color:'#00C27A',type:'ЭНЕРГИЯ',text:'Энергия <strong>'+'{energy}'+'/10</strong> — отличная неделя. На таком уровне когнитивная мощность максимальная'},
+    {cond:(d)=>d.energy<6,icon:'⚠️',color:'#E84444',type:'ЭНЕРГИЯ',text:'Низкая энергия (<strong>'+'{energy}'+'/10</strong>). Проверь: сон < 7ч, пропущенные тренировки или высокая стрессовая нагрузка'},
+    {cond:(d)=>d.sleep>=7.5,icon:'🌙',color:'#00C27A',type:'СОН',text:'Сон <strong>'+'{sleep}+'+'ч</strong> — оптимальный диапазон. Это основа для высокого HRV и когнитивной функции'},
+    {cond:(d)=>d.sleep<6.5,icon:'⚠️',color:'#E84444',type:'СОН',text:'Средний сон <strong>'+'{sleep}'+'ч</strong> — критически мало. Дефицит сна накапливается и снижает принятие решений'},
+    {cond:(d)=>d.workouts>=5,icon:'🏃',color:'#00C27A',type:'ТРЕНИРОВКИ',text:'<strong>'+'{workouts}'+' тренировок</strong> за неделю — отличная база. Физическая активность напрямую влияет на энергию и HRV'},
+    {cond:(d)=>d.workouts<3,icon:'💪',color:'#F0882A',type:'ТРЕНИРОВКИ',text:'Меньше 3 тренировок. В условиях высокой социальной нагрузки Москвы спорт — главный буфер стресса'},
+    {cond:(d)=>d.hrv>60,icon:'❤️',color:'#00C27A',type:'HRV',text:'HRV <strong>'+'{hrv}'+'</strong> — отличное восстановление. Можно давать высокоинтенсивные нагрузки и сложные переговоры'},
+    {cond:(d)=>d.hrv>0&&d.hrv<45,icon:'⚠️',color:'#E84444',type:'HRV',text:'HRV <strong>'+'{hrv}'+'</strong> — низкое восстановление. Снизь нагрузку, добавь сон, перенеси интенсивные тренировки'},
+    {cond:(d)=>d.energy>=7&&d.sleep>=7,icon:'✓',color:'#00C27A',type:'БАЛАНС',text:'Хороший баланс сна и энергии. Это состояние ресурса — используй для самых важных встреч и решений'},
+    {cond:(d)=>d.workouts>=5&&d.sleep>=7&&d.energy>=7,icon:'🔥',color:'#00C27A',type:'ОПТИМУМ',text:'Физиологический оптимум недели. Ставь самые важные переговоры и запуски на такие состояния'},
+  ],
+  cross: [
+    {cond:(d)=>d.energy>=8&&d.meets>=5,icon:'🔗',color:'#A78BFA',type:'СВЯЗЬ',text:'Высокая энергия (<strong>'+'{energy}'+'</strong>) + много встреч (<strong>'+'{meets}'+'</strong>) — эта комбинация исторически даёт лучшую выручку'},
+    {cond:(d)=>d.energy<6&&d.meets>=5,icon:'⚠️',color:'#F0882A',type:'РИСК',text:'Много встреч при низкой энергии. Качество контакта падает — лучше сократить кол-во и повысить качество'},
+    {cond:(d)=>d.pub>=5&&d.leads>=3,icon:'🔗',color:'#3D9EFF',type:'СВЯЗЬ',text:'Контент конвертируется в лиды. Воронка работает — продолжай увеличивать объём публикаций'},
+    {cond:(d)=>d.sleep<6.5&&d.energy<6,icon:'🆘',color:'#E84444',type:'КРИТИЧНО',text:'Сон и энергия одновременно низкие. Это системная усталость — нужен восстановительный день'},
+  ]
+};
+
+function buildInsightData(){
+  const s=load();
+  const entries=getEntries(30);
+  const prev=getEntries(14).filter(e=>new Date(e.date).getTime()<Date.now()-7*864e5);
+  const week=getEntries(7);
+  const last=(arr,k)=>{for(let i=arr.length-1;i>=0;i--)if(arr[i][k]!=null)return arr[i][k];return null;};
+  const tot=(arr,k)=>arr.reduce((a,e)=>a+(e[k]||0),0);
+  const avg=(arr,k)=>{const v=arr.filter(e=>k in e).map(e=>e[k]);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):0;};
+
+  const wMoney=week.filter(e=>e.type==='money');
+  const wContent=week.filter(e=>e.type==='content');
+  const wNetwork=week.filter(e=>e.type==='network');
+  const wHealth=week.filter(e=>e.type==='health');
+  const pMoney=prev.filter(e=>e.type==='money');
+
+  const rev=last(wMoney,'revenue')||0;
+  const prevRev=last(pMoney,'revenue')||0;
+  const delta=prevRev>0?Math.round((rev-prevRev)/prevRev*100):0;
+  const allMoney=entries.filter(e=>e.type==='money');
+  const avgRev=allMoney.length>0?Math.round(avg(allMoney,'revenue')/1000):0;
+  const goalNum=+(s.user.goal.replace(/[^0-9]/g,''))||1;
+  const mult=avgRev>0?(goalNum*1000/avgRev).toFixed(1):'—';
+
+  return{
+    rev,prevRev,delta,
+    deals:last(wMoney,'deals')||0,
+    pipe:last(wMoney,'pipeline')||0,
+    meets:tot(wNetwork,'meets'),
+    contacts:tot(wNetwork,'contacts'),
+    intros:tot(wNetwork,'intros'),
+    pub:tot(wContent,'published'),
+    shot:tot(wContent,'shot'),
+    subs:tot(wContent,'subs'),
+    leads:tot(wContent,'leads'),
+    energy:+(avg(wHealth,'energy').toFixed(1)),
+    sleep:+(avg(wHealth,'sleep').toFixed(1)),
+    hrv:Math.round(avg(wHealth,'hrv')),
+    workouts:tot(wHealth,'workouts'),
+    goals:s.goals,
+    weeks:Math.ceil(entries.length/4),
+    avgRev,mult,goalNum,
+    goal:s.user.goal
+  };
+}
+
+function fillTemplate(text,data){
+  return text
+    .replace('{delta}',Math.abs(data.delta))
+    .replace('{deals}',data.deals)
+    .replace('{pipe}',data.pipe)
+    .replace('{pub}',data.pub)
+    .replace('{subs}',data.subs)
+    .replace('{leads}',data.leads)
+    .replace('{meets}',data.meets)
+    .replace('{contacts}',data.contacts)
+    .replace('{intros}',data.intros)
+    .replace('{energy}',data.energy)
+    .replace('{sleep}',data.sleep)
+    .replace('{hrv}',data.hrv)
+    .replace('{workouts}',data.workouts)
+    .replace('{avgRev}',data.avgRev)
+    .replace('{mult}',data.mult)
+    .replace('{goal}',data.goalNum);
+}
+
+function renderInsights(){
+  const data=buildInsightData();
+  const hasData=data.rev>0||data.meets>0||data.pub>0||data.energy>0;
+
+  if(!hasData){
+    document.getElementById('insightsList').innerHTML='<div style="text-align:center;padding:24px;font-size:12px;color:var(--hint)">Инсайты появятся после 2–3 недель данных</div>';
+    return;
+  }
+
+  const all=[...INSIGHT_BANK.money,...INSIGHT_BANK.content,...INSIGHT_BANK.network,...INSIGHT_BANK.health,...INSIGHT_BANK.cross];
+  const matched=all.filter(ins=>{try{return ins.cond(data);}catch{return false;}}).slice(0,6);
+
+  if(!matched.length){
+    document.getElementById('insightsList').innerHTML='<div style="text-align:center;padding:24px;font-size:12px;color:var(--hint)">Продолжай вносить данные — паттерны пока не выявлены</div>';
+    return;
+  }
+
+  document.getElementById('insightsList').innerHTML=matched.map(ins=>`
+    <div class="ins">
+      <div class="ins-ic" style="background:${ins.color}22;font-size:14px;display:flex;align-items:center;justify-content:center">${ins.icon}</div>
+      <div>
+        <div class="ins-type" style="color:${ins.color}">${ins.type}</div>
+        <div class="ins-text">${fillTemplate(ins.text,data)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Week best
+  const allE=getEntries(90);
+  const bestMoney=allE.filter(e=>e.type==='money').sort((a,b)=>(b.revenue||0)-(a.revenue||0))[0];
+  const bestNet=allE.filter(e=>e.type==='network').sort((a,b)=>(b.meets||0)-(a.meets||0))[0];
+  const bestHealth=allE.filter(e=>e.type==='health').sort((a,b)=>(b.energy||0)-(a.energy||0))[0];
+  const bestContent=allE.filter(e=>e.type==='content').sort((a,b)=>(b.published||0)-(a.published||0))[0];
+
+  document.getElementById('weekBest').innerHTML=[
+    {v:bestMoney?Math.round((bestMoney.revenue||0)/1000)+'к ₽':'—',l:'Выручка',c:'#00C27A'},
+    {v:bestContent?(bestContent.published||0)+' видео':'—',l:'Контент',c:'#3D9EFF'},
+    {v:bestNet?(bestNet.meets||0)+' встреч':'—',l:'Нетворкинг',c:'#F0882A'},
+    {v:bestHealth?(bestHealth.energy||0)+'/10':'—',l:'Энергия',c:'#00C27A'},
+  ].map(b=>'<div class="wb" style="background:'+b.c+'15"><div class="wb-val" style="color:'+b.c+'">'+b.v+'</div><div class="wb-label" style="color:'+b.c+'">'+b.l+'</div></div>').join('');
+  document.getElementById('weekBestDate').textContent=bestMoney?'Лучшая запись: '+bestMoney.date:'';
+}
+
+// ── History ──
+let hFltType='all';
+function hFlt(type,btn){
+  hFltType=type;
+  document.querySelectorAll('#t-hi .pb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderHistory();
+}
+
+const TC={money:'Деньги',content:'Контент',network:'Нетворкинг',health:'Здоровье'};
+const TCc={money:'#00C27A',content:'#3D9EFF',network:'#F0882A',health:'#E84444'};
+
+function chips(e){
+  if(e.type==='money')return['₽'+Math.round((e.revenue||0)/1000)+'к',e.deals+' сделок','pipe '+e.pipeline];
+  if(e.type==='content')return['видео '+e.published,'+'+e.subs+' подп.','лиды '+e.leads];
+  if(e.type==='network')return['встреч '+e.meets,'контакты '+e.contacts,'введений '+e.intros];
+  if(e.type==='health')return['трен. '+e.workouts,'сон '+e.sleep+'ч','E '+e.energy];
+  return[];
+}
+
+function renderHistory(){
+  const s=load();
+  const list=hFltType==='all'?s.entries:s.entries.filter(e=>e.type===hFltType);
+  const el=document.getElementById('histList');
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:30px;font-size:12px;color:var(--hint)">Нет записей</div>';return;}
+  el.innerHTML=list.map(e=>'<div class="hi-item"><div class="hi-top"><div style="display:flex;align-items:center;gap:6px"><div style="width:5px;height:5px;border-radius:50%;background:'+TCc[e.type]+';flex:0 0 5px"></div><span style="font-size:11px;font-weight:500;color:var(--sub)">'+TC[e.type]+'</span></div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:var(--hint)">'+e.date+'</span><button class="del-btn" onclick="delEntry('+e.id+')" aria-label="Удалить">✕</button></div></div><div class="hi-chips">'+chips(e).map(c=>'<div class="hi-chip">'+c+'</div>').join('')+'</div></div>').join('');
+}
+
+// ── Profile ──
+function openProfile(){
+  document.getElementById('scr-app').classList.remove('active');
+  document.getElementById('scr-profile').classList.add('active');
+  renderProfile();
+}
+function closeProfile(){
+  document.getElementById('scr-profile').classList.remove('active');
+  document.getElementById('scr-app').classList.add('active');
+}
+function renderProfile(){
+  const s=load();
+  const initials=s.user.name?s.user.name.slice(0,2).toUpperCase():'МЕ';
+  document.getElementById('profileAvatar').textContent=initials;
+  document.getElementById('profileName').textContent=s.user.name||'—';
+  document.getElementById('profileMeta').textContent=s.user.goal+' · с '+s.user.startDate;
+  document.getElementById('pr-name-val').textContent=s.user.name||'—';
+  document.getElementById('pr-goal-val').textContent=s.user.goal||'—';
+  document.getElementById('pr-rev-val').textContent=Math.round(s.goals.revenue/1000)+'к ₽';
+  document.getElementById('pr-meets-val').textContent=s.goals.meets+' встреч';
+  document.getElementById('pr-vid-val').textContent=s.goals.videos+' видео';
+  document.getElementById('pr-wrkt-val').textContent=(s.goals.workouts||5)+' трен.';
+  const days=Math.ceil((Date.now()-new Date(s.user.startDate).getTime())/864e5);
+  document.getElementById('pr-days-val').textContent=days;
+  document.getElementById('ps-weeks').textContent=Math.ceil(s.entries.length/4)||0;
+  document.getElementById('ps-entries').textContent=s.entries.length;
+  const weeks=[];let streak=0;
+  for(let i=0;i<8;i++){const w=getEntries((i+1)*7).length-getEntries(i*7).length;if(w>0)streak++;else break;}
+  document.getElementById('ps-streak').textContent=streak;
+}
+
+function editField(field){
+  const s=load();
+  const val=prompt('Новое имя:',s.user.name);
+  if(val!==null){s.user.name=val.trim()||s.user.name;save(s);renderProfile();document.getElementById('avatarBtn').textContent=s.user.name.slice(0,2).toUpperCase();toast('Сохранено ✓');}
+}
+
+function editGoal(key){
+  const s=load();
+  const labels={revenue:'Выручка в неделю (₽)',meets:'Встреч в неделю',videos:'Видео в неделю',workouts:'Тренировок в неделю'};
+  const cur=s.goals[key==='videos'?'videos':key==='workouts'?'workouts':key];
+  const val=prompt(labels[key]+':',cur);
+  if(val!==null&&!isNaN(+val)){
+    if(key==='revenue')s.goals.revenue=+val;
+    else if(key==='meets')s.goals.meets=+val;
+    else if(key==='videos')s.goals.videos=+val;
+    else if(key==='workouts')s.goals.workouts=+val;
+    save(s);renderProfile();renderOverview();toast('Цель обновлена ✓');
+  }
+}
+
+function exportData(){
+  const s=load();
+  const blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='metrics_'+new Date().toISOString().split('T')[0]+'.json';a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetData(){
+  if(confirm('Сбросить все данные? Это действие нельзя отменить.')){
+    localStorage.removeItem(SK);
+    location.reload();
+  }
+}
+
+// ── Init sliders ──
+document.querySelectorAll('input[type=range]').forEach(el=>{
+  const pct=((+el.value-+el.min)/(+el.max-+el.min))*100;
+  el.style.background='linear-gradient(to right,var(--green) '+pct+'%,rgba(255,255,255,0.1) '+pct+'%)';
+});
+</script>
+</body>
+</html>
