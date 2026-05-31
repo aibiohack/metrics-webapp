@@ -166,6 +166,28 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#000;font-size:11px;font-weight:600;letter-spacing:1px;padding:9px 20px;border-radius:20px;transition:transform .28s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;z-index:999;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
+/* DAILY MODE */
+.day-greeting{font-size:13px;color:var(--sub);margin-bottom:16px;line-height:1.5}
+.day-greeting strong{color:var(--text)}
+.day-section{margin-bottom:4px}
+.day-section-title{font-size:10px;letter-spacing:1.5px;color:var(--hint);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.day-section-title::before{content:'';width:3px;height:10px;border-radius:2px;background:var(--ac,var(--green))}
+.day-toggle{display:flex;background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:3px;margin-bottom:14px}
+.day-toggle-btn{flex:1;padding:7px;border:none;border-radius:8px;background:transparent;color:var(--hint);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.day-toggle-btn.on{background:var(--green);color:#000}
+.day-done{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}
+.day-done:last-child{border-bottom:none}
+.day-done-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 22px}
+.day-done-label{font-size:12px;color:var(--sub);flex:1}
+.day-done-val{font-size:13px;font-weight:500;color:var(--text)}
+.streak-bar{display:flex;gap:4px;margin-top:8px}
+.streak-day{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,0.08)}
+.streak-day.done{background:var(--green)}
+.streak-day.today{background:var(--orange)}
+.quick-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.quick-chip{padding:6px 12px;border-radius:8px;border:0.5px solid var(--border);background:transparent;color:var(--sub);font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.quick-chip:active{background:rgba(255,255,255,0.06)}
+
 /* WEEK BEST */
 .week-best{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
 .wb{border-radius:8px;padding:8px 10px}
@@ -232,7 +254,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   </div>
 
   <div class="app-tabs">
-    <button class="app-tab on" onclick="swTab('ov',this)">Обзор</button>
+    <button class="app-tab on" onclick="swTab('td',this)">Сегодня</button>
+    <button class="app-tab" onclick="swTab('ov',this)">Обзор</button>
     <button class="app-tab" onclick="swTab('mo',this)">Деньги</button>
     <button class="app-tab" onclick="swTab('co',this)">Контент</button>
     <button class="app-tab" onclick="swTab('ne',this)">Нетворкинг</button>
@@ -243,8 +266,124 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
   <div class="app-body">
 
+    <!-- СЕГОДНЯ -->
+    <div class="tab-content on" id="t-td">
+      <div class="ttl" id="day-title">Доброе утро</div>
+      <div class="sub" id="day-date"></div>
+
+      <div class="day-toggle">
+        <button class="day-toggle-btn on" onclick="dayMode('morning',this)">Утро</button>
+        <button class="day-toggle-btn" onclick="dayMode('evening',this)">Вечер</button>
+        <button class="day-toggle-btn" onclick="dayMode('full',this)">Всё</button>
+      </div>
+
+      <!-- УТРО: здоровье -->
+      <div id="dm-morning">
+        <div class="day-section">
+          <div class="day-section-title" style="--ac:var(--green)">Здоровье</div>
+          <div class="card">
+            <div class="cl">Энергия сейчас (1–10)</div>
+            <div class="sl-hd"><div class="sl-val gn" id="d_energy">7</div><div class="sl-goal">цель: 7+</div></div>
+            <input type="range" min="1" max="10" step="1" value="7" oninput="sl(this,'d_energy')">
+          </div>
+          <div class="card">
+            <div class="cl">Сон прошлой ночью (часов)</div>
+            <div class="sl-hd"><div class="sl-val bl" id="d_sleep">7.5</div><div class="sl-goal">цель: 7.5+</div></div>
+            <input type="range" min="4" max="10" step="0.5" value="7.5" oninput="slf(this,'d_sleep')">
+          </div>
+          <div class="g2">
+            <div class="card" style="margin-bottom:0"><div class="cl">HRV</div><input class="inp" type="number" id="d_hrv" placeholder="—" inputmode="numeric"></div>
+            <div class="card" style="margin-bottom:0"><div class="cl">Тренировка</div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button id="d_wrkt_no" onclick="togWorkout(false)" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--border);background:rgba(232,68,68,0.15);color:var(--red);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Нет</button>
+                <button id="d_wrkt_yes" onclick="togWorkout(true)" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--green);background:rgba(0,194,122,0.15);color:var(--green);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Да ✓</button>
+              </div>
+            </div>
+          </div>
+          <div style="height:8px"></div>
+          <button class="btn" onclick="saveDayBlock('health')">Сохранить здоровье</button>
+        </div>
+      </div>
+
+      <!-- ВЕЧЕР: встречи + контент -->
+      <div id="dm-evening" style="display:none">
+        <div class="day-section">
+          <div class="day-section-title" style="--ac:var(--orange)">Нетворкинг сегодня</div>
+          <div class="card">
+            <div class="cl">Встреч сегодня</div>
+            <div class="sl-hd"><div class="sl-val" style="color:var(--orange)" id="d_meets">0</div><div class="sl-goal">за день</div></div>
+            <input type="range" min="0" max="10" step="1" value="0" oninput="sl(this,'d_meets')">
+          </div>
+          <div class="g2">
+            <div class="card" style="margin-bottom:0"><div class="cl">Новых контактов</div><input class="inp" type="number" id="d_contacts" placeholder="0" inputmode="numeric"></div>
+            <div class="card" style="margin-bottom:0"><div class="cl">Введений</div><input class="inp" type="number" id="d_intros" placeholder="0" inputmode="numeric"></div>
+          </div>
+          <div style="height:8px"></div>
+          <button class="btn" onclick="saveDayBlock('network')">Сохранить нетворкинг</button>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="day-section">
+          <div class="day-section-title" style="--ac:var(--blue)">Контент сегодня</div>
+          <div class="g2">
+            <div class="card" style="margin-bottom:0">
+              <div class="cl">Снял видео</div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button id="d_shot_no" onclick="togShot(false)" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--border);background:rgba(232,68,68,0.1);color:var(--red);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Нет</button>
+                <button id="d_shot_yes" onclick="togShot(true)" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--blue);background:rgba(61,158,255,0.1);color:var(--blue);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Да ✓</button>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:0">
+              <div class="cl">Опубликовал</div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button id="d_pub_no" onclick="togPub(false)" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--border);background:rgba(232,68,68,0.1);color:var(--red);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Нет</button>
+                <button id="d_pub_yes" onclick="togPub(true)" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--blue);background:rgba(61,158,255,0.1);color:var(--blue);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Да ✓</button>
+              </div>
+            </div>
+          </div>
+          <div style="height:8px"></div>
+          <div class="card"><div class="cl">+Подписчики сегодня</div><input class="inp" type="number" id="d_subs" placeholder="0" inputmode="numeric"></div>
+          <button class="btn" onclick="saveDayBlock('content')">Сохранить контент</button>
+        </div>
+      </div>
+
+      <!-- ПОЛНЫЙ: все блоки -->
+      <div id="dm-full" style="display:none">
+        <div class="card">
+          <div class="cl">Деньги (только по пятницам)</div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <span style="font-size:18px;color:var(--hint)">₽</span>
+            <input class="inp" type="number" id="df_rev" placeholder="0" inputmode="numeric">
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card" style="margin-bottom:0"><div class="cl">Сделок</div><input class="inp" type="number" id="df_deals" placeholder="0" inputmode="numeric"></div>
+          <div class="card" style="margin-bottom:0"><div class="cl">Pipeline</div><input class="inp" type="number" id="df_pipe" placeholder="0" inputmode="numeric"></div>
+        </div>
+        <div style="height:8px"></div>
+        <button class="btn" onclick="saveDayBlock('money_full')">Сохранить деньги</button>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- ИТОГ ДНЯ -->
+      <div style="height:12px"></div>
+      <div class="card">
+        <div class="cl">Сегодня внесено</div>
+        <div id="dayDoneList"><div style="font-size:11px;color:var(--hint);padding:4px 0">Ещё нет записей сегодня</div></div>
+      </div>
+
+      <div class="card">
+        <div class="cl">Streak — активные дни</div>
+        <div style="font-size:22px;font-weight:500;color:var(--green);margin-bottom:6px" id="streakNum">0</div>
+        <div class="streak-bar" id="streakBar"></div>
+        <div style="font-size:10px;color:var(--hint);margin-top:6px">Последние 7 дней</div>
+      </div>
+
+    </div>
+
     <!-- ОБЗОР -->
-    <div class="tab-content on" id="t-ov">
+    <div class="tab-content" id="t-ov">
       <div class="ttl">Обзор</div>
       <div class="sub">НАЖМИ КАРТОЧКУ — ПЕРЕКЛЮЧИ ТРЕНД</div>
       <div class="g2">
@@ -1013,11 +1152,188 @@ function resetData(){
   }
 }
 
-// ── Init sliders ──
+
+// ── Daily mode ──
+let dWorkout = false;
+let dShot = false;
+let dPub = false;
+let curDayMode = 'morning';
+
+function dayMode(mode, btn) {
+  curDayMode = mode;
+  document.querySelectorAll('.day-toggle-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('dm-morning').style.display = mode === 'morning' || mode === 'full' ? 'block' : 'none';
+  document.getElementById('dm-evening').style.display = mode === 'evening' || mode === 'full' ? 'block' : 'none';
+  document.getElementById('dm-full').style.display = mode === 'full' ? 'block' : 'none';
+}
+
+function togWorkout(val) {
+  dWorkout = val;
+  document.getElementById('d_wrkt_yes').style.opacity = val ? '1' : '0.4';
+  document.getElementById('d_wrkt_no').style.opacity = val ? '0.4' : '1';
+}
+
+function togShot(val) {
+  dShot = val;
+  document.getElementById('d_shot_yes').style.opacity = val ? '1' : '0.4';
+  document.getElementById('d_shot_no').style.opacity = val ? '0.4' : '1';
+}
+
+function togPub(val) {
+  dPub = val;
+  document.getElementById('d_pub_yes').style.opacity = val ? '1' : '0.4';
+  document.getElementById('d_pub_no').style.opacity = val ? '0.4' : '1';
+}
+
+function saveDayBlock(type) {
+  let e = { type: type === 'money_full' ? 'money' : type };
+
+  if (type === 'health') {
+    e.energy = +(document.getElementById('d_energy').textContent || 7);
+    e.sleep = +(document.getElementById('d_sleep').textContent || 7.5);
+    e.hrv = +(document.getElementById('d_hrv').value || 0);
+    e.workouts = dWorkout ? 1 : 0;
+  } else if (type === 'network') {
+    e.meets = +(document.getElementById('d_meets').textContent || 0);
+    e.contacts = +(document.getElementById('d_contacts').value || 0);
+    e.intros = +(document.getElementById('d_intros').value || 0);
+  } else if (type === 'content') {
+    e.shot = dShot ? 1 : 0;
+    e.published = dPub ? 1 : 0;
+    e.subs = +(document.getElementById('d_subs').value || 0);
+    e.leads = 0;
+  } else if (type === 'money_full') {
+    e.revenue = +(document.getElementById('df_rev').value || 0);
+    e.deals = +(document.getElementById('df_deals').value || 0);
+    e.pipeline = +(document.getElementById('df_pipe').value || 0);
+  }
+
+  addEntry(e);
+  if (tg) tg.sendData(JSON.stringify({ action: 'save', entry: e }));
+  toast('Сохранено ✓');
+  renderDayDone();
+  renderStreak();
+}
+
+function renderDayToday() {
+  const now = new Date();
+  const h = now.getHours();
+  const days = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('day-date').textContent = days[now.getDay()].toUpperCase() + ' · ' + now.getDate() + ' ' + months[now.getMonth()].toUpperCase();
+
+  let greeting = 'Доброе утро';
+  let defaultMode = 'morning';
+  if (h >= 12 && h < 17) { greeting = 'Добрый день'; defaultMode = 'evening'; }
+  else if (h >= 17) { greeting = 'Добрый вечер'; defaultMode = 'evening'; }
+  document.getElementById('day-title').textContent = greeting;
+
+  // Auto-switch to appropriate mode
+  const btn = document.querySelector('.day-toggle-btn:nth-child(' + (defaultMode === 'morning' ? 1 : 2) + ')');
+  if (btn && curDayMode === 'morning' && defaultMode === 'evening') {
+    dayMode(defaultMode, btn);
+  }
+}
+
+function renderDayDone() {
+  const today = new Date().toISOString().split('T')[0];
+  const s = load();
+  const todayEntries = s.entries.filter(e => e.date === today);
+
+  if (!todayEntries.length) {
+    document.getElementById('dayDoneList').innerHTML = '<div style="font-size:11px;color:var(--hint);padding:4px 0">Ещё нет записей сегодня</div>';
+    return;
+  }
+
+  const icons = { health: '🏃', network: '🤝', content: '📱', money: '💰' };
+  const colors = { health: 'var(--green)', network: 'var(--orange)', content: 'var(--blue)', money: 'var(--green)' };
+  const labels = { health: 'Здоровье', network: 'Нетворкинг', content: 'Контент', money: 'Деньги' };
+
+  function entryDesc(e) {
+    if (e.type === 'health') return `E${e.energy} · сон ${e.sleep}ч · HRV ${e.hrv || '—'} · ${e.workouts ? 'трен ✓' : 'без трен'}`;
+    if (e.type === 'network') return `${e.meets} встреч · ${e.contacts} контактов · ${e.intros} введений`;
+    if (e.type === 'content') return `${e.shot ? 'снял ✓' : 'не снял'} · ${e.published ? 'опубл ✓' : 'не опубл'} · +${e.subs || 0} подп`;
+    if (e.type === 'money') return `${Math.round((e.revenue || 0) / 1000)}к ₽ · ${e.deals} сделок`;
+    return '';
+  }
+
+  document.getElementById('dayDoneList').innerHTML = todayEntries.map(e => `
+    <div class="day-done">
+      <div class="day-done-icon" style="background:${colors[e.type]}18;font-size:13px">${icons[e.type]}</div>
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:500;color:${colors[e.type]};margin-bottom:2px">${labels[e.type]}</div>
+        <div style="font-size:11px;color:var(--sub)">${entryDesc(e)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderStreak() {
+  const s = load();
+  const today = new Date();
+  let streak = 0;
+  const bars = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    const hasEntry = s.entries.some(e => e.date === ds);
+    const isToday = i === 0;
+    bars.push({ ds, hasEntry, isToday });
+    if (hasEntry && i === 0) streak++;
+  }
+
+  // Count consecutive streak from today backwards
+  streak = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    if (s.entries.some(e => e.date === ds)) streak++;
+    else break;
+  }
+
+  document.getElementById('streakNum').textContent = streak + (streak === 1 ? ' день' : streak >= 2 && streak <= 4 ? ' дня' : ' дней');
+  document.getElementById('streakBar').innerHTML = bars.map(b =>
+    `<div class="streak-day ${b.isToday ? 'today' : b.hasEntry ? 'done' : ''}" title="${b.ds}"></div>`
+  ).join('');
+}
+
+// ── Override swTab to handle today tab ──
+const _origSwTab = swTab;
+function swTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('t-' + id).classList.add('on');
+  btn.classList.add('on');
+  document.querySelector('.app-body').scrollTop = 0;
+  if (id === 'td') { renderDayToday(); renderDayDone(); renderStreak(); }
+  if (id === 'hi') renderHistory();
+  if (id === 'in') renderInsights();
+  if (id === 'ov') renderOverview();
+}
+
+// Init today on load
+function initTodayTab() {
+  renderDayToday();
+  renderDayDone();
+  renderStreak();
+}
+
+
 document.querySelectorAll('input[type=range]').forEach(el=>{
   const pct=((+el.value-+el.min)/(+el.max-+el.min))*100;
   el.style.background='linear-gradient(to right,var(--green) '+pct+'%,rgba(255,255,255,0.1) '+pct+'%)';
 });
+
+// Patch initApp to also init today tab
+const _origInitApp = initApp;
+function initApp() {
+  _origInitApp();
+  initTodayTab();
+}
 </script>
 </body>
 </html>
